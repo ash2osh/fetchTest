@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.tonyodev.fetch2.Fetch
 import com.tonyodev.fetch2core.Func
 import kotlinx.coroutines.*
 import org.kodein.di.Kodein
@@ -17,11 +16,10 @@ import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
-import com.tonyodev.fetch2.NetworkType
-import com.tonyodev.fetch2.Priority
-import com.tonyodev.fetch2.Request
 import android.content.IntentFilter
 import android.widget.Toast
+import android.app.NotificationManager
+import com.tonyodev.fetch2.*
 
 
 class DownloadService : IntentService("download-service")
@@ -36,6 +34,7 @@ class DownloadService : IntentService("download-service")
     val ONGOING_NOTIFICATION_ID = 989
     private val TAG = "DownloadService->"
     private var isUpAndRunning = false
+    var downloadCount = 1
 
     companion object {
         const val DOWNLOAD_GROUP_ID = 7777
@@ -51,7 +50,6 @@ class DownloadService : IntentService("download-service")
 
     private var notificationManager: NotificationManager? = null
     //    private var contentView: RemoteViews? = null
-    private var notification: Notification? = null
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -72,6 +70,8 @@ class DownloadService : IntentService("download-service")
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service Created")
+        //notification stuff
+        notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val filter = IntentFilter()
         filter.addAction(BROADCAST_ACTION)
         registerReceiver(receiver, filter)
@@ -80,29 +80,31 @@ class DownloadService : IntentService("download-service")
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(TAG, "onStartCommand fired : $this")
-        if (!isUpAndRunning) {
-            Log.d(TAG, "first start")
-            launch {
+        launch {
+            if (!isUpAndRunning) {
+                Log.d(TAG, "first start")
+
                 val title = getString(R.string.downloading)
-                val text = getDownloadsCount().toString() + getString(R.string.downloads_remaining)
+                val text = downloadCount.toString() + getString(R.string.downloads_remaining)
                 val icon = R.drawable.ic_file_download_black_24dp
-                createNotification(title, text, icon)
+                val notification = createNotification(title, text, icon)
                 startForeground(ONGOING_NOTIFICATION_ID, notification)
                 isUpAndRunning = true
             }
+            if (intent != null && intent.hasExtra(COMMAND)) {
+                val cmd = intent.getIntExtra(COMMAND, 0)
+                Log.d(TAG, "COMMAND->$cmd")
+                handleCommand(cmd, intent)
+            }
         }
-        if (intent != null && intent.hasExtra(COMMAND)) {
-            val cmd = intent.getIntExtra(COMMAND, 0)
-            Log.d(TAG, "COMMAND->$cmd")
-            launch { handleCommand(cmd, intent) }
-        }
+
         // Return "sticky" for services that are explicitly
         // started and stopped as needed by the app.
         return START_STICKY
     }
 
     private fun handleCommand(cmd: Int, intent: Intent?) {
-        Log.d(TAG, "command handled" + cmd)
+        Log.d(TAG, "command handled $cmd")
         when (cmd) {
             COMMAND_PAUSE -> {
                 fetch.pauseGroup(DOWNLOAD_GROUP_ID)
@@ -145,10 +147,11 @@ class DownloadService : IntentService("download-service")
         if (!stringExtra.isNullOrBlank()) {
             txt = stringExtra
         }
+        refreshDownloadsCount()
         val title = getString(R.string.downloading)
-        val text = getDownloadsCount().toString() + getString(R.string.downloads_remaining) + " " + txt
+        val text = downloadCount.toString() + getString(R.string.downloads_remaining) + " " + txt
         val icon = R.drawable.ic_file_download_black_24dp
-        createNotification(title, text, icon)
+        val notification = createNotification(title, text, icon)
 
         launch {
             notificationManager?.notify(ONGOING_NOTIFICATION_ID, notification)
@@ -156,7 +159,7 @@ class DownloadService : IntentService("download-service")
     }
 
 
-    private fun createNotification(title: String, text: String, icon: Int) {
+    private fun createNotification(title: String, text: String, icon: Int): Notification? {
         val intent = Intent(this, MainActivity::class.java)
         val requestID = System.currentTimeMillis().toInt()
         val flags = PendingIntent.FLAG_CANCEL_CURRENT // cancel old intent and create new one
@@ -169,12 +172,12 @@ class DownloadService : IntentService("download-service")
             PendingIntent.getService(applicationContext, COMMAND_STOP, closeIntent, FLAG_UPDATE_CURRENT)
 
         val pauseIntent = Intent(applicationContext, DownloadService::class.java)
-        closeIntent.putExtra(COMMAND, COMMAND_PAUSE)
+        pauseIntent.putExtra(COMMAND, COMMAND_PAUSE)
         val pausePendingIntent =
             PendingIntent.getService(applicationContext, COMMAND_PAUSE, pauseIntent, FLAG_UPDATE_CURRENT)
 
         val resumeIntent = Intent(applicationContext, DownloadService::class.java)
-        closeIntent.putExtra(COMMAND, COMMAND_RESUME)
+        resumeIntent.putExtra(COMMAND, COMMAND_RESUME)
         val resumePendingIntent =
             PendingIntent.getService(applicationContext, COMMAND_RESUME, resumeIntent, FLAG_UPDATE_CURRENT)
 
@@ -221,9 +224,9 @@ class DownloadService : IntentService("download-service")
                 .addAction(actionResume)
                 .addAction(actionClose)
 //                .addAction(actionClose)
-            //TODO add actions
 
-            notification = builder.build()
+
+            return builder.build()
         }
         /////////////////////////////////////////////////////////////////////
         else {            //NotificationCompat for api < 25
@@ -259,18 +262,27 @@ class DownloadService : IntentService("download-service")
                 .addAction(actionClose)
 
 
-            notification = builder.build()
+            return builder.build()
         }
 
 
     }
 
-    private fun getDownloadsCount(): Int {
-        var downloads = 0
+    private fun refreshDownloadsCount() {
+
+
         fetch.getDownloadsInGroup(DOWNLOAD_GROUP_ID, Func {
-            downloads = it.size
+            val c = it.filter { download ->
+                download.status == Status.DOWNLOADING
+                        || download.status == Status.QUEUED
+                        || download.status == Status.ADDED
+                        || download.status == Status.PAUSED
+            }.size
+            if (c == 0) {
+                stopThisService()
+            }
+            downloadCount = c
         })
-        return downloads
     }
 
 
@@ -284,5 +296,8 @@ class DownloadService : IntentService("download-service")
         Log.d(TAG, "onDestroy fired")
         job.cancel()
         unregisterReceiver(receiver)
+        fetch.close()
+        stopForeground(true)//extra precaution is good
+        notificationManager?.cancel(ONGOING_NOTIFICATION_ID)//just in case
     }
 }

@@ -27,8 +27,6 @@ class MainActivity : AppCompatActivity(), KodeinAware {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //TODO forground service
-
 
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Download started", Snackbar.LENGTH_LONG)

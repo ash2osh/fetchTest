@@ -10,14 +10,17 @@ import org.kodein.di.KodeinAware
 import org.kodein.di.android.x.androidXModule
 import org.kodein.di.generic.bind
 import org.kodein.di.generic.instance
+import org.kodein.di.generic.provider
 import org.kodein.di.generic.singleton
 
 class MyApp : Application(), KodeinAware {
     private lateinit var fetchConfiguration: FetchConfiguration
     override val kodein = Kodein.lazy {
         import(androidXModule(this@MyApp))
+
         bind<CustomFetchListener>() with singleton { CustomFetchListener() }
-        bind<Fetch>() with singleton { Fetch.getInstance(fetchConfiguration).addListener(instance()) }
+        //fetch is not singleton cause i will call close on it to release resources
+        bind() from provider { Fetch.getInstance(fetchConfiguration).addListener(instance()) }
     }
 
     override fun onCreate() {
@@ -33,9 +36,6 @@ class MyApp : Application(), KodeinAware {
         lateinit var context: Context
     }
 
-    override fun onTerminate() {
-        super.onTerminate()
-//        fetch.close()  ???//TODO
-    }
+
 }
 
