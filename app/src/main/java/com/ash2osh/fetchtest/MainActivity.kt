@@ -19,8 +19,6 @@ import android.content.Intent
 import android.os.Build
 
 
-
-
 class MainActivity : AppCompatActivity(), KodeinAware {
     override val kodein: Kodein by closestKodein()
     private val fetch: Fetch by instance()
@@ -39,7 +37,7 @@ class MainActivity : AppCompatActivity(), KodeinAware {
             val url = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_5mb.mp4"
             val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
             val file = downloads + "/" + java.util.UUID.randomUUID().toString()
-            val downloadBundle = CreateDownloadBundle(url,file)
+            val downloadBundle = CreateDownloadBundle(url, file)
 
             runWithPermissions(Permission.WRITE_EXTERNAL_STORAGE) {
                 val dService = Intent(this, DownloadService::class.java)
@@ -52,35 +50,15 @@ class MainActivity : AppCompatActivity(), KodeinAware {
                 }
 
 
-//                val url = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_5mb.mp4"
-//                val downloads =
-//                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
-//                val file = downloads + "/" + java.util.UUID.randomUUID().toString()
-//                val request = Request(url, file)
-//
-//                Log.d("-->", file)
-//
-//                request.priority = Priority.HIGH
-//                request.networkType = NetworkType.WIFI_ONLY
-//                request.groupId = DownloadService.DOWNLOAD_GROUP_ID
-////            request.addHeader("clientKey", "SD78DF93_3947&MVNGHE1WONG")
-//
-//                fetch!!.enqueue(request, Func { result ->
-//                    Log.d("->", "dowload enqueued" + result.id)
-//                }, Func { error ->
-//                    Log.e("-->", error.name, error.throwable)
-//                })
-
             }
         }
 
         fablist.setOnClickListener {
-            fetch!!.cancelAll()
-//            //Query all downloads
-//            fetch!!.getDownloads(Func {
-//                Log.d("--->", it.toString())
-//            })
-
+            Intent().also { intent ->
+                intent.action = "com.ash2osh.fetchtest.DOWNLOAD_NOTIFACTION"
+                intent.putExtra("CMD", "Notice me senpai!")
+                sendBroadcast(intent)
+            }
         }
 
 
@@ -89,8 +67,8 @@ class MainActivity : AppCompatActivity(), KodeinAware {
     fun CreateDownloadBundle(url: String, file: String): Bundle {
         val mBundle = Bundle()
         mBundle.putInt(DownloadService.COMMAND, DownloadService.COMMAND_ADD)
-        mBundle.putString("URL",url)
-        mBundle.putString("FILE",file)
+        mBundle.putString("URL", url)
+        mBundle.putString("FILE", file)
         return mBundle
     }
 

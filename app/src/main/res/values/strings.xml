@@ -2,5 +2,5 @@
     <string name="app_name">fetchTest</string>
     <string name="action_settings">Settings</string>
     <string name="downloading">Downloading</string>
-    <string name="downloads_remaining">Downloads Remaining ..</string>
+    <string name="downloads_remaining">Downloads Remaining ...</string>
 </resources>
