@@ -7,25 +7,17 @@
         android:layout_height="match_parent"
         tools:context=".MainActivity"
 >
-    <androidx.recyclerview.widget.RecyclerView android:layout_width="match_parent"
-                                               android:layout_height="match_parent" android:id="@+id/recyclerView">
+    <fragment
+            android:id="@+id/nav_host_fragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:name="androidx.navigation.fragment.NavHostFragment"
+            app:navGraph="@navigation/nav_graph"
+            app:defaultNavHost="true"/>
 
-    </androidx.recyclerview.widget.RecyclerView>
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="true" app:srcCompat="@mipmap/ic_launcher_round" android:id="@+id/fab"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginEnd="31dp" app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginBottom="48dp"/>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="true"
-            app:srcCompat="@mipmap/ic_launcher_round" android:id="@+id/fablist"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginBottom="48dp" app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginStart="32dp"/>
+
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

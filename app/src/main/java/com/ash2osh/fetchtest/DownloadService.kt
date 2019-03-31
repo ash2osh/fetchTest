@@ -19,6 +19,7 @@ import android.content.Context
 import android.content.IntentFilter
 import android.widget.Toast
 import android.app.NotificationManager
+import androidx.navigation.NavDeepLinkBuilder
 import com.tonyodev.fetch2.*
 
 
@@ -127,7 +128,7 @@ class DownloadService : IntentService("download-service")
                 request.groupId = DOWNLOAD_GROUP_ID
                 //request.addHeader("clientKey", "SD78DF93_3947&MVNGHE1WONG")
 
-                fetch!!.enqueue(request, Func { result ->
+                fetch.enqueue(request, Func { result ->
                     Log.d("->", "dowload enqueued" + result.id)
                 }, Func { error ->
                     //TODO handle error better
@@ -162,8 +163,17 @@ class DownloadService : IntentService("download-service")
     private fun createNotification(title: String, text: String, icon: Int): Notification? {
         val intent = Intent(this, MainActivity::class.java)
         val requestID = System.currentTimeMillis().toInt()
-        val flags = PendingIntent.FLAG_CANCEL_CURRENT // cancel old intent and create new one
-        val pIntent = PendingIntent.getActivity(applicationContext, requestID, intent, flags)
+
+        // Prepare the pending intent, while specifying the graph and destination
+        val pIntent = NavDeepLinkBuilder(MyApp.context)
+            .setGraph(R.navigation.nav_graph)
+            .setDestination(R.id.queueFragment)
+//            .setArguments(arguments)
+            .createPendingIntent()
+
+//        val flags = PendingIntent.FLAG_CANCEL_CURRENT // cancel old intent and create new one
+//        val pIntent = PendingIntent.getActivity(applicationContext, requestID, intent, flags)
+
 
         ///////pending intents
         val closeIntent = Intent(applicationContext, DownloadService::class.java)
