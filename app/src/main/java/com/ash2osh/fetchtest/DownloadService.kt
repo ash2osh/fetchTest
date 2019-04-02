@@ -36,7 +36,7 @@ class DownloadService : IntentService("download-service")
     private val ONGOING_NOTIFICATION_ID = 989
     private val TAG = "DownloadService->"
     private var isUpAndRunning = false
-    var downloadCount = 1
+    private var downloadCount = 1
 
     companion object {
         const val DOWNLOAD_GROUP_ID = 7777
@@ -67,7 +67,7 @@ class DownloadService : IntentService("download-service")
         Log.d(TAG, "action received" + intent?.action)
         val action = intent?.action
         if (action == BROADCAST_ACTION) {
-            val cmd = intent?.getIntExtra(COMMAND, 0)
+            val cmd = intent.getIntExtra(COMMAND, 0)
             launch {
                 if (cmd != null) {
                     handleCommand(cmd, intent)
@@ -98,7 +98,7 @@ class DownloadService : IntentService("download-service")
                 Log.d(TAG, "first start")
 
                 val title = getString(R.string.downloading)
-                val text = downloadCount.toString() + getString(R.string.downloads_remaining)
+                val text = downloadCount.toString() + " "+ getString(R.string.downloads_remaining)
                 val icon = R.drawable.ic_file_download_black_24dp
                 val notification = createNotification(title, text, icon)
                 startForeground(ONGOING_NOTIFICATION_ID, notification)
@@ -128,7 +128,7 @@ class DownloadService : IntentService("download-service")
                 updateNotification(null)
             }
             COMMAND_STOP -> {
-                fetch.cancelAll()
+                fetch.cancelGroup(DOWNLOAD_GROUP_ID)
                 stopThisService()
             }
             COMMAND_ADD -> {
@@ -138,10 +138,10 @@ class DownloadService : IntentService("download-service")
                 request.priority = Priority.HIGH
                 request.networkType = NetworkType.WIFI_ONLY //TODO get from shared prefs
                 request.groupId = DOWNLOAD_GROUP_ID
-                //request.addHeader("clientKey", "SD78DF93_3947&MVNGHE1WONG")
+                //request.addHeader("clientKey", "SD78DF93_3947&MANGE1WONG")
 
                 fetch.enqueue(request, Func { result ->
-                    Log.d("->", "dowload enqueued" + result.id)
+                    Log.d("->", "download enqueued" + result.id)
                 }, Func { error ->
                     //TODO handle error better
                     Log.e("-->", error.name, error.throwable)
@@ -317,7 +317,6 @@ class DownloadService : IntentService("download-service")
         Toast.makeText(applicationContext, getString(R.string.download_finished_toast), Toast.LENGTH_SHORT).show()
         job.cancel()
         unregisterReceiver(receiver)
-        fetch.close()
         stopForeground(true)//extra precaution is good
         notificationManager?.cancel(ONGOING_NOTIFICATION_ID)//just in case
     }

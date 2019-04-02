@@ -19,12 +19,12 @@ class CustomFetchListener : FetchListener {
 
     override fun onWaitingNetwork(download: Download) {
         Log.i(TAG, "download waiting :$download")
-        sendCommand(DownloadService.COMMAND_NOTIFY, "Waiting for network")
+        sendCommand("Waiting for network")
     }
 
     override fun onStarted(download: Download, list: List<DownloadBlock>, i: Int) {
         Log.i(TAG, "download started :$download")
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
+        sendCommand()
     }
 
     override fun onError(download: Download, error: Error, throwable: Throwable?) {
@@ -34,7 +34,7 @@ class CustomFetchListener : FetchListener {
 
     override fun onRemoved(download: Download) {
         Log.i(TAG, "download removed :$download")
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
+        sendCommand()
     }
 
     override fun onQueued(download: Download, b: Boolean) {
@@ -45,26 +45,27 @@ class CustomFetchListener : FetchListener {
         Log.i(TAG, "download progress :$download\n-->($download.downloaded/$download.total)")
 
         sendCommand(
-            DownloadService.COMMAND_NOTIFY,
             "Downloading " + (download.downloaded * 100 / download.total).toInt() + "%"
         )
     }
 
     override fun onCompleted(download: Download) {
         Log.i(TAG, "download complete :$download")
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
+        sendCommand()
     }
 
     override fun onCancelled(download: Download) {
         Log.i(TAG, "download cancelled :" + download.url)
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
+        sendCommand()
     }
 
 
     override fun onResumed(download: Download) {
+        sendCommand()
     }
 
     override fun onPaused(download: Download) {
+        sendCommand("Paused")
     }
 
 
@@ -73,21 +74,25 @@ class CustomFetchListener : FetchListener {
 
     override fun onDeleted(download: Download) {
         Log.i(TAG, "download deleted :$download")
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
+        sendCommand()
     }
 
-    private fun sendCommand(cmd: Int, notifacation: String = "") {
+    private fun sendCommand(notification: String = "") {
+        var cmd = DownloadService.COMMAND_UPDATE_NOTIFICATION
+        if (notification.isNotBlank()) {
+            cmd = DownloadService.COMMAND_NOTIFY
+        }
+
         Intent().also { intent ->
             intent.action = DownloadService.BROADCAST_ACTION
             intent.putExtra(DownloadService.COMMAND, cmd)
-            if (notifacation.isNotBlank())
-                intent.putExtra("TXT", notifacation)
+            if (notification.isNotBlank())
+                intent.putExtra("TXT", notification)
 
             MyApp.context.sendBroadcast(intent)
 
         }
     }
-
 
 
 }

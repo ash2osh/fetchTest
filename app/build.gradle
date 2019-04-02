@@ -57,14 +57,20 @@ dependencies {
         //recycler
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.46'
 
+    //leak canary
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.6.3'
+    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.6.3'
+    // Optional, if you use support library fragments:
+    debugImplementation 'com.squareup.leakcanary:leakcanary-support-fragment:1.6.3'
 
-//test
+
+//view model
     implementation "androidx.lifecycle:lifecycle-extensions:2.0.0"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.0.0"
     kapt "androidx.lifecycle:lifecycle-compiler:2.0.0"
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
-
+//test
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.2-alpha02'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0-alpha02'

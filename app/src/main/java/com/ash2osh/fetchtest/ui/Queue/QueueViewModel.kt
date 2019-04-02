@@ -29,6 +29,7 @@ class QueueViewModel(private val fetch: Fetch) : ScopedViewModel() {
     private fun getDownloads() {
         fetch.getDownloadsInGroup(DownloadService.DOWNLOAD_GROUP_ID, Func {
             _downloads.value = it.filter { download -> DownloadService.downloadFilter(download) }
+                .sortedByDescending { download -> download.status }
         })
     }
 
