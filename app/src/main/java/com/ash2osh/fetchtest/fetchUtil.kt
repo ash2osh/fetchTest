@@ -24,7 +24,7 @@ class CustomFetchListener : FetchListener {
 
     override fun onStarted(download: Download, list: List<DownloadBlock>, i: Int) {
         Log.i(TAG, "download started :$download")
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFACATION)
+        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
     }
 
     override fun onError(download: Download, error: Error, throwable: Throwable?) {
@@ -34,7 +34,7 @@ class CustomFetchListener : FetchListener {
 
     override fun onRemoved(download: Download) {
         Log.i(TAG, "download removed :$download")
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFACATION)
+        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
     }
 
     override fun onQueued(download: Download, b: Boolean) {
@@ -52,12 +52,12 @@ class CustomFetchListener : FetchListener {
 
     override fun onCompleted(download: Download) {
         Log.i(TAG, "download complete :$download")
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFACATION)
+        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
     }
 
     override fun onCancelled(download: Download) {
         Log.i(TAG, "download cancelled :" + download.url)
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFACATION)
+        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
     }
 
 
@@ -73,18 +73,21 @@ class CustomFetchListener : FetchListener {
 
     override fun onDeleted(download: Download) {
         Log.i(TAG, "download deleted :$download")
-        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFACATION)
+        sendCommand(DownloadService.COMMAND_UPDATE_NOTIFICATION)
     }
 
     private fun sendCommand(cmd: Int, notifacation: String = "") {
         Intent().also { intent ->
-            intent.action = "com.ash2osh.fetchtest.DOWNLOAD_NOTIFACTION"
+            intent.action = DownloadService.BROADCAST_ACTION
             intent.putExtra(DownloadService.COMMAND, cmd)
             if (notifacation.isNotBlank())
                 intent.putExtra("TXT", notifacation)
+
             MyApp.context.sendBroadcast(intent)
+
         }
     }
+
 
 
 }

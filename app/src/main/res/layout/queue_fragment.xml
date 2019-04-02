@@ -4,11 +4,8 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".ui.QueueFragment">
-
-    <TextView
+        tools:context=".ui.Queue.QueueFragment">
+    <androidx.recyclerview.widget.RecyclerView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="Hello"/>
-
+            android:layout_height="match_parent" android:id="@+id/queueRV"/>
 </FrameLayout>

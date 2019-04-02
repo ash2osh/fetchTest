@@ -1,26 +1,27 @@
 package com.ash2osh.fetchtest
 
 import android.app.*
+import android.app.PendingIntent.FLAG_UPDATE_CURRENT
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import androidx.navigation.NavDeepLinkBuilder
+import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2core.Func
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.android.closestKodein
 import org.kodein.di.generic.instance
 import kotlin.coroutines.CoroutineContext
-import android.app.PendingIntent.FLAG_UPDATE_CURRENT
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.IntentFilter
-import android.widget.Toast
-import android.app.NotificationManager
-import androidx.navigation.NavDeepLinkBuilder
-import com.tonyodev.fetch2.*
 
 
 class DownloadService : IntentService("download-service")
@@ -32,35 +33,46 @@ class DownloadService : IntentService("download-service")
     override val coroutineContext: CoroutineContext
         get() = job + Dispatchers.Main
 
-    val ONGOING_NOTIFICATION_ID = 989
+    private val ONGOING_NOTIFICATION_ID = 989
     private val TAG = "DownloadService->"
     private var isUpAndRunning = false
     var downloadCount = 1
 
     companion object {
         const val DOWNLOAD_GROUP_ID = 7777
-        const val BROADCAST_ACTION = "com.ash2osh.fetchtest.DOWNLOAD_NOTIFACTION";
+        const val BROADCAST_ACTION = "com.ash2osh.fetchtest.DOWNLOAD_NOTIFICATION"
         const val COMMAND = "CMD"
         const val COMMAND_STOP = 333
         const val COMMAND_PAUSE = 111
         const val COMMAND_RESUME = 222
         const val COMMAND_ADD = 1
-        const val COMMAND_NOTIFY = 2 //changes notifacation text
-        const val COMMAND_UPDATE_NOTIFACATION = 3
+        const val COMMAND_NOTIFY = 2 //changes notification text
+        const val COMMAND_UPDATE_NOTIFICATION = 3
+        fun downloadFilter(download: Download): Boolean {
+            return (download.status == Status.DOWNLOADING
+                    || download.status == Status.QUEUED
+                    || download.status == Status.ADDED
+                    || download.status == Status.PAUSED)
+        }
     }
 
     private var notificationManager: NotificationManager? = null
     //    private var contentView: RemoteViews? = null
 
-    private val receiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            Log.d(TAG, "action received" + intent.action)
-            val action = intent.action
-            if (action == BROADCAST_ACTION) {
-                val cmd = intent.getIntExtra(COMMAND, 0)
-                launch { handleCommand(cmd, intent) }
-            }
+    private val receiver = DownloadBroadcastReceiver(block = { i: Intent? ->
+        onDownloadBroadcasted(i)
+    })
 
+    private fun onDownloadBroadcasted(intent: Intent?) {
+        Log.d(TAG, "action received" + intent?.action)
+        val action = intent?.action
+        if (action == BROADCAST_ACTION) {
+            val cmd = intent?.getIntExtra(COMMAND, 0)
+            launch {
+                if (cmd != null) {
+                    handleCommand(cmd, intent)
+                }
+            }
         }
     }
 
@@ -137,7 +149,7 @@ class DownloadService : IntentService("download-service")
                 })
                 updateNotification(null)
             }
-            COMMAND_UPDATE_NOTIFACATION -> updateNotification(null)
+            COMMAND_UPDATE_NOTIFICATION -> updateNotification(null)
             COMMAND_NOTIFY -> updateNotification(intent?.getStringExtra("TXT"))
         }
     }
@@ -206,18 +218,19 @@ class DownloadService : IntentService("download-service")
 
 
             //actions
+
             val actionPause = Notification.Action.Builder(
-                R.drawable.ic_file_download_black_24dp,
+                Icon.createWithResource(applicationContext, R.drawable.ic_pause_black_24dp),
                 "pause", pausePendingIntent
             ).build()
 
             val actionResume = Notification.Action.Builder(
-                R.drawable.ic_file_download_black_24dp,
+                Icon.createWithResource(applicationContext, R.drawable.ic_play_arrow_black_24dp),
                 "Resume", resumePendingIntent
             ).build()
 
             val actionClose = Notification.Action.Builder(
-                R.drawable.ic_file_download_black_24dp,
+                Icon.createWithResource(applicationContext, R.drawable.ic_cancel_black_24dp),
                 "Cancel all Downloads", closePendingIntent
             ).build()
 
@@ -227,7 +240,7 @@ class DownloadService : IntentService("download-service")
                 .setContentTitle(title)
                 .setContentText(text)
                 .setSmallIcon(icon)
-
+                .setOnlyAlertOnce(true)//avoid noise
                 .setContentIntent(pIntent)
                 .setAutoCancel(false)
                 .addAction(actionPause)
@@ -242,17 +255,17 @@ class DownloadService : IntentService("download-service")
         else {            //NotificationCompat for api < 25
             //actions
             val actionPause = NotificationCompat.Action.Builder(
-                R.drawable.ic_file_download_black_24dp,
+                R.drawable.ic_pause_black_24dp,
                 "pause", pausePendingIntent
             ).build()
 
             val actionResume = NotificationCompat.Action.Builder(
-                R.drawable.ic_file_download_black_24dp,
+                R.drawable.ic_play_arrow_black_24dp,
                 "Resume", resumePendingIntent
             ).build()
             val actionClose =
                 NotificationCompat.Action.Builder(
-                    R.drawable.ic_file_download_black_24dp,
+                    R.drawable.ic_cancel_black_24dp,
                     "Cancel all Downloads", closePendingIntent
                 ).build()
 
@@ -262,7 +275,7 @@ class DownloadService : IntentService("download-service")
                 .setContentTitle(title)
                 .setContentText(text)
                 .setSmallIcon(icon)
-
+                .setOnlyAlertOnce(true)//avoid noise
                 .setContentIntent(pIntent)
                 .setAutoCancel(false)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -283,10 +296,7 @@ class DownloadService : IntentService("download-service")
 
         fetch.getDownloadsInGroup(DOWNLOAD_GROUP_ID, Func {
             val c = it.filter { download ->
-                download.status == Status.DOWNLOADING
-                        || download.status == Status.QUEUED
-                        || download.status == Status.ADDED
-                        || download.status == Status.PAUSED
+                downloadFilter(download)
             }.size
             if (c == 0) {
                 stopThisService()
@@ -304,6 +314,7 @@ class DownloadService : IntentService("download-service")
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "onDestroy fired")
+        Toast.makeText(applicationContext, getString(R.string.download_finished_toast), Toast.LENGTH_SHORT).show()
         job.cancel()
         unregisterReceiver(receiver)
         fetch.close()
