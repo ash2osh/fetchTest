@@ -6,5 +6,6 @@
     <string name="download_finished_toast">All Downloads Finished</string>
     <string name="cancel">Cancel</string>
     <string name="no_active_downloads">No Active Downloads</string>
+    <string name="storage_rationale">we need storage permission</string>
 
 </resources>

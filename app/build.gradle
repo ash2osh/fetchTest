@@ -47,7 +47,9 @@ dependencies {
 
 //other libs
     implementation 'com.tonyodev.fetch2:fetch2:3.0.2'
-    implementation 'com.afollestad:assent:2.2.3'
+//    implementation 'com.afollestad:assent:2.2.3'
+    implementation 'pub.devrel:easypermissions:3.0.0'
+
     //di
     implementation "org.kodein.di:kodein-di-generic-jvm:5.3.0"
     implementation "org.kodein.di:kodein-di-framework-android-x:5.3.0"
