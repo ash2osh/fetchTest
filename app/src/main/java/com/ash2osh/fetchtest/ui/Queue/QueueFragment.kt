@@ -1,14 +1,18 @@
 package com.ash2osh.fetchtest.ui.Queue
 
+import android.Manifest
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ash2osh.fetchtest.DownloadBroadcastReceiver
@@ -21,6 +25,8 @@ import kotlinx.android.synthetic.main.queue_fragment.*
 import org.kodein.di.KodeinAware
 import org.kodein.di.android.x.closestKodein
 import org.kodein.di.generic.instance
+import pub.devrel.easypermissions.EasyPermissions
+import java.util.*
 
 class QueueFragment : ScopedFragment(), KodeinAware {
     override val TAG: String
@@ -34,6 +40,29 @@ class QueueFragment : ScopedFragment(), KodeinAware {
     private lateinit var emptyView: EmptyView
 
     private fun bindUI() {
+        fab.setOnClickListener { view ->
+            val url = "http://www.rapconverter.com/SampleDownload/Sample720.mp4"
+            val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+            val file = downloads + "/" + UUID.randomUUID().toString()
+            val downloadBundle = createDownloadBundle(url, file)
+
+            runWithPermission(111) {
+                val dService = Intent(context, DownloadService::class.java)
+                dService.putExtras(downloadBundle)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    activity?.startForegroundService(dService)
+                } else {
+                    activity?.startService(dService)
+                }
+
+            }
+        }
+
+        settingFab.setOnClickListener {
+            findNavController().navigate(R.id.preferenceFragment)
+        }
+
         //bind recycler view
         adapter = QueueAdapter(mutableListOf())
 
@@ -55,6 +84,27 @@ class QueueFragment : ScopedFragment(), KodeinAware {
         adapter?.emptyView = this.emptyView.view
     }
 
+
+    private fun createDownloadBundle(url: String, file: String): Bundle {
+        val mBundle = Bundle()
+        mBundle.putInt(DownloadService.COMMAND, DownloadService.COMMAND_ADD)
+        mBundle.putString("URL", url)
+        mBundle.putString("FILE", file)
+        return mBundle
+    }
+
+
+    private fun runWithPermission(code: Int, block: () -> Unit) {
+        if (EasyPermissions.hasPermissions(context!!, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+            block()
+        else
+            EasyPermissions.requestPermissions(
+                this,
+                getString(R.string.storage_rationale),
+                code,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+    }
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProviders.of(this, viewModelFactory).get(QueueViewModel::class.java)

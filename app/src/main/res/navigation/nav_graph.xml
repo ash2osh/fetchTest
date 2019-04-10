@@ -2,10 +2,12 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"
             xmlns:tools="http://schemas.android.com/tools" android:id="@+id/nav_graph.xml"
-            app:startDestination="@id/homeFragment">
+            app:startDestination="@id/queueFragment">
 
-    <fragment android:id="@+id/homeFragment" android:name="com.ash2osh.fetchtest.ui.HomeFragment"
-              android:label="fragment_home" tools:layout="@layout/fragment_home"/>
     <fragment android:id="@+id/queueFragment" android:name="com.ash2osh.fetchtest.ui.Queue.QueueFragment"
-              android:label="queue_fragment" tools:layout="@layout/queue_fragment"/>
+              android:label="queue_fragment" tools:layout="@layout/queue_fragment">
+        <action android:id="@+id/action_queueFragment_to_preferenceFragment" app:destination="@id/preferenceFragment"/>
+    </fragment>
+    <fragment android:id="@+id/preferenceFragment" android:name="com.ash2osh.fetchtest.ui.PreferenceFragment"
+              android:label="PreferenceFragment"/>
 </navigation>

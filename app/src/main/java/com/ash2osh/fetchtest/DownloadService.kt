@@ -11,6 +11,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.navigation.NavDeepLinkBuilder
+import androidx.preference.PreferenceManager
 import com.tonyodev.fetch2.*
 import com.tonyodev.fetch2core.Func
 import kotlinx.coroutines.CoroutineScope
@@ -37,6 +38,7 @@ class DownloadService : IntentService("download-service")
     private val TAG = "DownloadService->"
     private var isUpAndRunning = false
     private var downloadCount = 1
+    private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(MyApp.context)
 
     companion object {
         const val DOWNLOAD_GROUP_ID = 7777
@@ -135,8 +137,11 @@ class DownloadService : IntentService("download-service")
                 val url = intent?.getStringExtra("URL")
                 val file = intent?.getStringExtra("FILE")
                 val request = Request(url ?: "", file ?: "")
+
+
+                val wifi = sharedPreferences.getBoolean("wifi_only", false)
                 request.priority = Priority.HIGH
-                request.networkType = NetworkType.WIFI_ONLY //TODO get from shared prefs
+                request.networkType = if (wifi) NetworkType.WIFI_ONLY else NetworkType.ALL
                 request.groupId = DOWNLOAD_GROUP_ID
                 //request.addHeader("clientKey", "SD78DF93_3947&MANGE1WONG")
 

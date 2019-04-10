@@ -8,4 +8,7 @@
     <string name="no_active_downloads">No Active Downloads</string>
     <string name="storage_rationale">we need storage permission</string>
 
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>
