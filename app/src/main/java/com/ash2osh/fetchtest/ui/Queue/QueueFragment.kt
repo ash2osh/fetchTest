@@ -21,6 +21,7 @@ import com.ash2osh.fetchtest.R
 import com.ash2osh.fetchtest.ui.base.EmptyView
 import com.ash2osh.fetchtest.ui.base.ScopedFragment
 import com.chad.library.adapter.base.BaseQuickAdapter
+import com.tonyodev.fetch2.Status
 import kotlinx.android.synthetic.main.queue_fragment.*
 import org.kodein.di.KodeinAware
 import org.kodein.di.android.x.closestKodein
@@ -41,7 +42,7 @@ class QueueFragment : ScopedFragment(), KodeinAware {
 
     private fun bindUI() {
         fab.setOnClickListener { view ->
-            val url = "http://www.rapconverter.com/SampleDownload/Sample720.mp4"
+            val url = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_2mb.mp4"
             val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
             val file = downloads + "/" + UUID.randomUUID().toString()
             val downloadBundle = createDownloadBundle(url, file)
@@ -70,8 +71,16 @@ class QueueFragment : ScopedFragment(), KodeinAware {
             when (view.id) {
                 R.id.item_downloadBTN -> {
                     val download = adapter!!.getItem(position)
-                    viewModel.cancelDownload(download)
                     Log.d(TAG, "onItemChildClick:  $download")
+
+                    if (download?.status == Status.COMPLETED) {
+                        val action =
+                            QueueFragmentDirections.actionQueueFragmentToPlayerFragment(download.file)
+                        findNavController().navigate(action)
+                    } else {
+                        viewModel.cancelDownload(download)
+                    }
+
                 }
             }
         }
@@ -105,6 +114,7 @@ class QueueFragment : ScopedFragment(), KodeinAware {
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
             )
     }
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProviders.of(this, viewModelFactory).get(QueueViewModel::class.java)

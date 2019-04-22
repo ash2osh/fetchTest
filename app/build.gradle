@@ -25,9 +25,10 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = '1.8'
+        targetCompatibility = '1.8'
     }
+
 }
 
 dependencies {
@@ -59,10 +60,11 @@ dependencies {
     // Kotlin Android Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.0'
-        //recycler
+    //recycler
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.46'
 
     //leak canary
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.6.3'
     releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.6.3'
     // Optional, if you use support library fragments:

@@ -54,7 +54,8 @@ class DownloadService : IntentService("download-service")
             return (download.status == Status.DOWNLOADING
                     || download.status == Status.QUEUED
                     || download.status == Status.ADDED
-                    || download.status == Status.PAUSED)
+                    || download.status == Status.PAUSED
+                    || download.status == Status.COMPLETED)
         }
     }
 
@@ -100,7 +101,7 @@ class DownloadService : IntentService("download-service")
                 Log.d(TAG, "first start")
 
                 val title = getString(R.string.downloading)
-                val text = downloadCount.toString() + " "+ getString(R.string.downloads_remaining)
+                val text = downloadCount.toString() + " " + getString(R.string.downloads_remaining)
                 val icon = R.drawable.ic_file_download_black_24dp
                 val notification = createNotification(title, text, icon)
                 startForeground(ONGOING_NOTIFICATION_ID, notification)
