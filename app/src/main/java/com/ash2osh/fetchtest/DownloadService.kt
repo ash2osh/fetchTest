@@ -18,7 +18,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.kodein.di.Kodein
 import org.kodein.di.KodeinAware
 import org.kodein.di.android.closestKodein
 import org.kodein.di.generic.instance
@@ -27,8 +26,8 @@ import kotlin.coroutines.CoroutineContext
 
 class DownloadService : IntentService("download-service")
     , KodeinAware, CoroutineScope {
+    override val kodein by closestKodein()
 
-    override val kodein: Kodein by closestKodein()
     private val fetch: Fetch by instance()
     private var job: Job = Job()
     override val coroutineContext: CoroutineContext
@@ -50,13 +49,22 @@ class DownloadService : IntentService("download-service")
         const val COMMAND_ADD = 1
         const val COMMAND_NOTIFY = 2 //changes notification text
         const val COMMAND_UPDATE_NOTIFICATION = 3
-        fun downloadFilter(download: Download): Boolean {
+        fun activeDownloadFilter(download: Download): Boolean {
             return (download.status == Status.DOWNLOADING
                     || download.status == Status.QUEUED
                     || download.status == Status.ADDED
                     || download.status == Status.PAUSED
-                    || download.status == Status.COMPLETED)
+                    )
         }
+        fun allDownloadsFilter(download: Download): Boolean {
+            return (download.status == Status.DOWNLOADING
+                    || download.status == Status.QUEUED
+                    || download.status == Status.ADDED
+                    || download.status == Status.PAUSED
+                    || download.status == Status.COMPLETED
+                    || download.status == Status.FAILED)
+        }
+
     }
 
     private var notificationManager: NotificationManager? = null
@@ -72,7 +80,7 @@ class DownloadService : IntentService("download-service")
         if (action == BROADCAST_ACTION) {
             val cmd = intent.getIntExtra(COMMAND, 0)
             launch {
-                if (cmd != null) {
+                if (cmd != 0) {
                     handleCommand(cmd, intent)
                 }
             }
@@ -179,8 +187,8 @@ class DownloadService : IntentService("download-service")
 
 
     private fun createNotification(title: String, text: String, icon: Int): Notification? {
-        val intent = Intent(this, MainActivity::class.java)
-        val requestID = System.currentTimeMillis().toInt()
+//        val intent = Intent(this, MainActivity::class.java)
+//        val requestID = System.currentTimeMillis().toInt()
 
         // Prepare the pending intent, while specifying the graph and destination
         val pIntent = NavDeepLinkBuilder(MyApp.context)
@@ -302,7 +310,7 @@ class DownloadService : IntentService("download-service")
 
         fetch.getDownloadsInGroup(DOWNLOAD_GROUP_ID, Func {
             val c = it.filter { download ->
-                downloadFilter(download)
+                activeDownloadFilter(download)
             }.size
             if (c == 0) {
                 stopThisService()

@@ -3,7 +3,7 @@ package com.ash2osh.fetchtest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
-import com.ash2osh.fetchtest.ui.Queue.QueueViewModelFactory
+import com.ash2osh.fetchtest.ui.queue.QueueViewModelFactory
 import com.squareup.leakcanary.LeakCanary
 import com.tonyodev.fetch2.Fetch
 import com.tonyodev.fetch2.FetchConfiguration
@@ -34,6 +34,10 @@ class MyApp : Application(), KodeinAware {
         LeakCanary.install(this)
         fetchConfiguration = FetchConfiguration.Builder(this.applicationContext)
             .setDownloadConcurrentLimit(1)
+            .enableRetryOnNetworkGain(true)
+            .setProgressReportingInterval(2000)
+            .setAutoRetryMaxAttempts(3)
+            .enableLogging(BuildConfig.DEBUG)
             .build()
     }
 

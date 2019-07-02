@@ -22,14 +22,14 @@ class CustomFetchListener : FetchListener {
         sendCommand("Waiting for network")
     }
 
-    override fun onStarted(download: Download, list: List<DownloadBlock>, i: Int) {
+    override fun onStarted(download: Download, downloadBlocks: List<DownloadBlock>, totalBlocks: Int) {
         Log.i(TAG, "download started :$download")
         sendCommand()
     }
 
     override fun onError(download: Download, error: Error, throwable: Throwable?) {
         Log.e(TAG, "download error :" + download + "\n " + error.name, throwable)
-        //TODO handle
+        sendCommand()
     }
 
     override fun onRemoved(download: Download) {
@@ -37,11 +37,12 @@ class CustomFetchListener : FetchListener {
         sendCommand()
     }
 
-    override fun onQueued(download: Download, b: Boolean) {
+    override fun onQueued(download: Download, waitingOnNetwork: Boolean) {
         Log.i(TAG, "download queued :$download")
+        sendCommand()
     }
 
-    override fun onProgress(download: Download, l: Long, l1: Long) {
+    override fun onProgress(download: Download, etaInMilliSeconds: Long, downloadedBytesPerSecond: Long) {
         Log.i(TAG, "download progress :$download\n-->($download.downloaded/$download.total)")
 
         sendCommand(
@@ -69,7 +70,7 @@ class CustomFetchListener : FetchListener {
     }
 
 
-    override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, i: Int) {
+    override fun onDownloadBlockUpdated(download: Download, downloadBlock: DownloadBlock, totalBlocks: Int) {
     }
 
     override fun onDeleted(download: Download) {
@@ -90,7 +91,6 @@ class CustomFetchListener : FetchListener {
                 intent.putExtra("TXT", notification)
 
             MyApp.context.sendBroadcast(intent)
-
         }
     }
 

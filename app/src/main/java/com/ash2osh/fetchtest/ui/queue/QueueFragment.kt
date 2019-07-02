@@ -1,4 +1,4 @@
-package com.ash2osh.fetchtest.ui.Queue
+package com.ash2osh.fetchtest.ui.queue
 
 import android.Manifest
 import android.content.Intent
@@ -30,22 +30,33 @@ import pub.devrel.easypermissions.EasyPermissions
 import java.util.*
 
 class QueueFragment : ScopedFragment(), KodeinAware {
+    override val kodein by closestKodein()
     override val TAG: String
         get() = "QueueFragment->"
-    override val kodein by closestKodein()
+
     private val viewModelFactory: QueueViewModelFactory by instance()
     private lateinit var viewModel: QueueViewModel
     private lateinit var receiver: DownloadBroadcastReceiver
     private var mLayoutManager: RecyclerView.LayoutManager? = null
     private var adapter: QueueAdapter? = null
     private lateinit var emptyView: EmptyView
+    private var isError = false
 
     private fun bindUI() {
-        fab.setOnClickListener { view ->
-            val url = "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_2mb.mp4"
+        fab.setOnClickListener {
+            val url = "http://192.168.10.81/1.mkv"
+            val downloadUrl: String
+            if (isError) {
+                downloadUrl = "http://192.168.10.81/1.mkv"
+                isError=false
+            } else {
+                downloadUrl=url
+                isError=true
+            }
+
             val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
             val file = downloads + "/" + UUID.randomUUID().toString()
-            val downloadBundle = createDownloadBundle(url, file)
+            val downloadBundle = createDownloadBundle(downloadUrl, file)
 
             runWithPermission(111) {
                 val dService = Intent(context, DownloadService::class.java)

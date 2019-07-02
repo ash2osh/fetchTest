@@ -1,4 +1,4 @@
-package com.ash2osh.fetchtest.ui.Queue
+package com.ash2osh.fetchtest.ui.queue
 
 import android.content.res.ColorStateList
 import android.graphics.Color
@@ -16,12 +16,33 @@ class QueueAdapter(data: List<Download>) : BaseQuickAdapter<Download, BaseViewHo
     override fun convert(holder: BaseViewHolder?, item: Download?) {
         holder?.setText(R.id.item_downloadTV, item?.file)
         item?.progress?.let { holder?.setProgress(R.id.item_downloadPP, it) }
+
+        when (item?.status) {
+            Status.COMPLETED -> {
+                holder?.setText(R.id.item_downloadBTN, R.string.play)
+                setBtnColor(holder, Color.GREEN)
+            }
+            Status.FAILED -> {
+
+            }
+            else -> {
+                holder?.setText(R.id.item_downloadBTN, R.string.cancel)
+                setBtnColor(holder, Color.RED)
+            }
+        }
+
         if (item?.status == Status.COMPLETED) {
-            holder?.setText(R.id.item_downloadBTN, R.string.play)
-            holder?.getView<Button>(R.id.item_downloadBTN)?.backgroundTintList = ColorStateList.valueOf(Color.GREEN)
+
+
+        } else {
+
         }
         holder?.addOnClickListener(R.id.item_downloadBTN)
         holder?.setText(R.id.item_download_statTV, item?.status.toString())
+    }
+
+    private fun setBtnColor(holder: BaseViewHolder?, color: Int) {
+        holder?.getView<Button>(R.id.item_downloadBTN)?.backgroundTintList = ColorStateList.valueOf(color)
     }
 
     override fun onItemChildClick(adapter: BaseQuickAdapter<*, *>?, view: View?, position: Int) {
